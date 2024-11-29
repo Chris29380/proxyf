@@ -38,11 +38,6 @@ install_ssl(){
     echo
     echo -e "${COLOR2} Certbot Installation ... ${NC}"
     apt install -y certbot python3-certbot-nginx
-    echo
-    certbot --nginx -d proxyf.cdtfivem.com
-    echo -e "${COLOR2} Copy Config files ... ${NC}"
-    cp ./nginx/default /etc/nginx/sites-enabled/default
-    cp ./nginx/nginx.conf /etc/nginx/nginx.conf
 }
 
 install_ssl
@@ -61,3 +56,13 @@ install_php(){
 }
 
 install_php
+
+install_certbot(){
+    echo
+    certbot --nginx -d proxyf.cdtfivem.com
+    echo -e "${COLOR2} Copy Config files ... ${NC}"
+    cp ./nginx/default /etc/nginx/sites-enabled/default
+    cp ./nginx/nginx.conf /etc/nginx/nginx.conf
+}
+
+install_certbot

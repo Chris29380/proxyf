@@ -1,0 +1,109 @@
+server {
+	listen 80;
+	listen [::]:80;	
+
+    server_name _;
+
+    root /var/www/cdtfivemprotect/;
+
+    error_page 403 /e403.php;
+
+	location / {
+        limit_req zone=flood burst=12 delay=8;
+        return 403;
+	}
+	
+    location ~ \.php$ {
+        fastcgi_pass unix:/run/php/php8.2-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include fastcgi_params;
+        include snippets/fastcgi-php.conf;
+    }
+}
+
+server {
+
+    listen 443 ssl;
+    listen [::]:443;
+
+    server_name _;
+
+    ssl_certificate /etc/letsencrypt/live/proxyf.cdtfivem.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/proxyf.cdtfivem.com/privkey.pem;
+
+    root /var/www/cdtfivemprotect/;
+    
+    error_page 403 /e403.php;
+
+    location ~ \.php$ {
+        fastcgi_pass unix:/run/php/php8.2-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include fastcgi_params;
+        include snippets/fastcgi-php.conf;
+    }
+
+    location / {
+        limit_req zone=flood burst=12 delay=8;
+        return 403;
+    }
+
+}
+
+upstream proxies {
+    server proxy1.cdtfivem.com;
+}
+
+server {
+	listen 80;
+	listen [::]:80;
+
+	server_name proxyf.cdtfivem.com;
+
+    index index.html index.htm index.nginx-debian.html;
+
+	location / {
+        limit_req zone=flood burst=12 delay=8;
+        return 301 https://proxyf.cdtfivem.com;
+	}
+	
+}
+
+server {
+
+	listen 443 ssl;
+	listen [::]:443;
+
+	server_name proxyf.cdtfivem.com;
+	
+	ssl_certificate /etc/letsencrypt/live/proxyf.cdtfivem.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/proxyf.cdtfivem.com/privkey.pem;
+
+	root /var/www/cdtfivemprotect;
+
+    error_page 404 /e404.php;
+    error_page 403 /e403.php;
+
+    index index.html index.htm index.php;
+
+	location / {
+        limit_req zone=flood burst=12 delay=8;
+		if ($block_ua) {
+            return 403;
+        }
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header Referer $http_referer;
+        proxy_pass_request_headers on;
+        proxy_pass https://proxies;
+	}
+
+	location ~ \.php$ {
+        fastcgi_pass unix:/run/php/php8.2-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include fastcgi_params;
+        include snippets/fastcgi-php.conf;
+    }
+
+}
+

@@ -50,7 +50,7 @@ server {
 }
 
 upstream proxies {
-    server proxy1.cdtfivem.com;
+    server https://proxy1.cdtfivem.com;
 }
 
 server {
@@ -95,7 +95,8 @@ server {
         proxy_set_header X-Forwarded-For $remote_addr;
         proxy_set_header Referer $host;
         proxy_pass_request_headers on;
-        proxy_pass https://proxies;
+        underscores_in_headers on;
+        proxy_pass proxies;
 	}
 
 	location ~ \.php$ {

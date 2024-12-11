@@ -1,71 +1,23 @@
 server {
-	listen 80;
-	listen [::]:80;	
-
-    server_name _;
-
-    root /var/www/cdtfivemprotect/;
-
-    error_page 403 /e403.php;
-
-	location / {
-        limit_req zone=flood burst=12 delay=8;
-        return 403;
-	}
-	
-    location ~ \.php$ {
-        fastcgi_pass unix:/run/php/php8.2-fpm.sock;
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-        include fastcgi_params;
-        include snippets/fastcgi-php.conf;
-    }
-}
-
-server {
 
     listen 443 ssl;
     listen [::]:443;
 
-    server_name _;
+    server_name "";
 
     ssl_certificate /etc/letsencrypt/live/proxyf.cdtfivem.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/proxyf.cdtfivem.com/privkey.pem;
 
-    root /var/www/cdtfivemprotect/;
-    
-    error_page 403 /e403.php;
-
-    location ~ \.php$ {
-        fastcgi_pass unix:/run/php/php8.2-fpm.sock;
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-        include fastcgi_params;
-        include snippets/fastcgi-php.conf;
-    }
-
     location / {
-        limit_req zone=flood burst=12 delay=8;
-        return 403;
+        limit_req zone=flood443 ;
+        limit_conn flood443 5;
+        deny all;
     }
 
 }
 
-upstream proxies {
-    server https://proxy1.cdtfivem.com;
-}
-
-server {
-	listen 80;
-	listen [::]:80;
-
-	server_name proxyf.cdtfivem.com;
-
-    index index.html index.htm index.nginx-debian.html;
-
-	location / {
-        limit_req zone=flood burst=12 delay=8;
-        return 301 https://proxyf.cdtfivem.com;
-	}
-	
+upstream proxiesb {
+    server proxy1.cdtfivem.com:443;
 }
 
 server {
@@ -80,13 +32,14 @@ server {
 
 	root /var/www/cdtfivemprotect;
 
-    error_page 404 /e404.php;
-    error_page 403 /e403.php;
+    error_page 404 /e404.html;
+    error_page 403 /e403.html;
 
     index index.html index.htm index.php;
 
 	location / {
-        limit_req zone=flood burst=12 delay=8;
+        limit_req zone=floodurl ;
+        limit_conn floodurl 10;
 		if ($block_ua) {
             return 403;
         }
@@ -95,16 +48,8 @@ server {
         proxy_set_header X-Forwarded-For $remote_addr;
         proxy_set_header Referer $host;
         proxy_pass_request_headers on;
-        underscores_in_headers on;
-        proxy_pass proxies;
+        set $endpoint proxyf;
+        proxy_pass https://proxiesb/$endpoint;
 	}
-
-	location ~ \.php$ {
-        fastcgi_pass unix:/run/php/php8.2-fpm.sock;
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-        include fastcgi_params;
-        include snippets/fastcgi-php.conf;
-    }
-
 }
 

@@ -12,6 +12,13 @@ if [ "$(id -u)" != "0" ]; then
     exit 1
 fi
 
+IPTABLES="/sbin/iptables"
+IP6TABLES="/sbin/ip6tables"
+MODPROBE="/sbin/modprobe"
+RMMOD="/sbin/rmmod"
+ARP="/usr/sbin/arp"
+SSHPORT="22"
+
 install_antiddos(){
 
     # Load required kernel modules
@@ -276,10 +283,6 @@ cp ./ddos/99999-cdt.conf /etc/sysctl.d/99999-cdt.conf
     iptables -A INPUT -m state --state NEW -p tcp --dport 53 -j ACCEPT
     iptables -A OUTPUT -m state --state NEW -p udp --dport 53 -j ACCEPT
     iptables -A OUTPUT -m state --state NEW -p tcp --dport 53 -j ACCEPT
-
-    # Allow HTTP requests. Unencrypted, use with care.
-    iptables -A INPUT -m state --state NEW -p tcp --dport 80 -j ACCEPT
-    iptables -A OUTPUT -m state --state NEW -p tcp --dport 80 -j ACCEPT
 
     # Allow HTTPS requests.
     iptables -A INPUT -m state --state NEW -p tcp --dport 443 -j ACCEPT
